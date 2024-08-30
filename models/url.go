@@ -6,7 +6,6 @@ import (
 
 type Hit struct {
 	Time       time.Time   `json:"time"`
-	Remote     string      `json:"remote"`
 	RequestURI string      `json:"request_uri"`
 	RemoteAddr string      `json:"remote_addr"`
 	Host       string      `json:"host"`
@@ -15,6 +14,7 @@ type Hit struct {
 }
 
 type URLMetadata struct {
+	URL  string `json:"url"`
 	Hits []*Hit `json:"hits"`
 }
 
@@ -26,12 +26,4 @@ type URL struct {
 	ID       string      `json:"id"`
 	Source   string      `json:"source"`
 	Metadata URLMetadata `json:"metadata"`
-}
-
-func NewURL(id string, source string, hits int) *URL {
-	return &URL{
-		ID:       id,
-		Source:   source,
-		Metadata: URLMetadata{Hits: []*Hit{}},
-	}
 }

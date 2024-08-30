@@ -19,8 +19,8 @@ type URLRepository struct {
 	logger *logrus.Logger
 }
 
-func (r *URLRepository) buildKey(id string) string {
-	return fmt.Sprintf("URLS:%s", id)
+func (r *URLRepository) buildKey(pattern string, id string) string {
+	return fmt.Sprintf("%s:%s", pattern, id)
 }
 
 func (r *URLRepository) Add(u *models.URL) error {
@@ -33,7 +33,7 @@ func (r *URLRepository) Add(u *models.URL) error {
 		r.logger.Warn("[URLRepository][Add] error on unmarshal redis data err:", err)
 		return err
 	}
-	err = r.rdb.Set(r.ctx, r.buildKey(u.ID), jsonData, 0).Err()
+	err = r.rdb.Set(r.ctx, r.buildKey("URLS", u.ID), jsonData, 0).Err()
 	if err != nil {
 		r.logger.Warn("[URLRepository][Add] error on set redis data err:", err)
 		return err
@@ -41,8 +41,39 @@ func (r *URLRepository) Add(u *models.URL) error {
 	return nil
 }
 
+func (r *URLRepository) GetMedatada(url string) (models.URLMetadata, error) {
+	m := models.URLMetadata{URL: url}
+	jsonValue, err := r.rdb.Get(r.ctx, r.buildKey("URL_MEDATADA", url)).Result()
+	if err != nil {
+		r.logger.Warn("[URLRepository][GetMedatada] error on get redis data err:", err)
+		return m, err
+	}
+
+	err = json.Unmarshal([]byte(jsonValue), &m)
+	if err != nil {
+		r.logger.Warn("[URLRepository][GetMedatada] error on unmarshal redis data err:", err)
+		return m, err
+	}
+
+	return m, nil
+}
+
+func (r *URLRepository) AddMetadata(m *models.URLMetadata) error {
+	jsonData, err := json.Marshal(m)
+	if err != nil {
+		r.logger.Warn("[URLRepository][AddMetadata] error on unmarshal redis data err:", err)
+		return err
+	}
+	err = r.rdb.Set(r.ctx, r.buildKey("URL_MEDATADA", m.URL), jsonData, 0).Err()
+	if err != nil {
+		r.logger.Warn("[URLRepository][AddMetadata] error on set redis data err:", err)
+		return err
+	}
+	return nil
+}
+
 func (r *URLRepository) Get(id string, request *http.Request) (*models.URL, error) {
-	jsonValue, err := r.rdb.Get(r.ctx, r.buildKey(id)).Result()
+	jsonValue, err := r.rdb.Get(r.ctx, r.buildKey("URLS", id)).Result()
 	if err != nil {
 		r.logger.Warn("[URLRepository][Get] error on get redis data err:", err)
 		return nil, err
@@ -55,16 +86,16 @@ func (r *URLRepository) Get(id string, request *http.Request) (*models.URL, erro
 		return nil, err
 	}
 
-	u.Metadata.AddHit(&models.Hit{
+	metadata, _ := r.GetMedatada(u.ID)
+	metadata.AddHit(&models.Hit{
 		Time:       time.Now(),
-		Remote:     request.Method,
 		RequestURI: request.RequestURI,
 		RemoteAddr: request.RemoteAddr,
 		Host:       request.Host,
 		Header:     request.Header,
 		Method:     request.Method,
 	})
-	r.Add(&u)
+	r.AddMetadata(&metadata)
 	return &u, nil
 }
 
