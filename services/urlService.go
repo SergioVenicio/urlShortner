@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -15,6 +16,9 @@ type URLService struct {
 }
 
 func (s *URLService) Add(u *models.URL) error {
+	if u.Source == "" {
+		return errors.New("invalid url")
+	}
 	s.logger.Debug("[URLService][Add] received url:", u)
 	return s.repository.Add(u)
 }

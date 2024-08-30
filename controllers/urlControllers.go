@@ -38,8 +38,12 @@ func (c *URLController) Add(w http.ResponseWriter, r *http.Request) {
 
 	err = c.service.Add(&u)
 	if err != nil {
-		c.logger.Debug("[URLController] error:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err.Error() == "invalid url" {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		} else {
+			c.logger.Debug("[URLController] error:", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 

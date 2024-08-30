@@ -23,7 +23,6 @@ func (m *URLMetadata) AddHit(h *Hit) {
 }
 
 type URL struct {
-	ID       string      `json:"id"`
-	Source   string      `json:"source"`
-	Metadata URLMetadata `json:"metadata"`
+	ID     string `json:"id"`
+	Source string `json:"source"`
 }

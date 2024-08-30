@@ -23,7 +23,6 @@ func main() {
 	urlRepository := repositories.NewURLRepository(logger)
 	urlService := services.NewURLService(urlRepository, logger)
 	urlController := controllers.NewURLController(urlService, logger)
-
 	srv := http.NewServeMux()
 	srv.HandleFunc("GET /{id}", urlController.GetByID)
 	srv.HandleFunc("POST /", urlController.Add)
